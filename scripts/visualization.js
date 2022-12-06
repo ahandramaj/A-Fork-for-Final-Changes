@@ -1,8 +1,8 @@
 function dataVisualization(data, matrix) {
     $("#chart").empty() //clears chart area before displaying the 
 /* __________________________________________Set-Up_____________________________________________________________________________________--
-
 */
+//variable ideas taken from: https://stackoverflow.com/questions/43259039/how-to-add-labels-into-the-arc-of-a-chord-diagram-in-d3-js
     
     const names = []
     const colors = []
@@ -10,9 +10,9 @@ function dataVisualization(data, matrix) {
     
     const opacityDefault = 0.8
     const margin = { left: 90, top: 90, right: 90, bottom: 90 },
-     width = 1000 - margin.left - margin.right // more flexibility: Math.min(window.innerWidth, 1000),
-     height = 1000 - margin.top - margin.bottom // same: Math.min(window.innerWidth, 1000),
-     innerRadius = Math.min(width, height) * .39,
+     width = 1000 //removed margins to free up the space for diagram,
+     height = 1000 //removed margins to free up the space for diagram,
+     innerRadius = Math.min(width, height) * .30 //changed multiplier from .39 to .30 to make diagram smaller,
      outerRadius = innerRadius * 1.1;
     
     for (var i = 0, l = data.length; i < l; i++)
@@ -28,8 +28,10 @@ function dataVisualization(data, matrix) {
     const color = d3.scaleOrdinal()
         .domain(d3.range(names.length))
         .range(colors);
-/* __________________________________________Elements_____________________________________________________________________________________--
+/* __________________________________________Variable_____________________________________________________________________________________--
 */
+//variable ideas taken from: https://stackoverflow.com/questions/43259039/how-to-add-labels-into-the-arc-of-a-chord-diagram-in-d3-js
+//tooltip variable idea taken from: https://d3-graph-gallery.com/graph/chord_interactive.html
     const chord = d3.chord()
         .padAngle(0.15)
         .sortSubgroups(d3.descending)
@@ -51,8 +53,9 @@ function dataVisualization(data, matrix) {
         .style("border-radius", "5px")
         .style("padding", "10px")
 
-/* __________________________________________create SVG_____________________________________________________________________________________--
+/* __________________________________________Create SVG_____________________________________________________________________________________--
 */
+//visualization idea taken from: https://stackoverflow.com/questions/43259039/how-to-add-labels-into-the-arc-of-a-chord-diagram-in-d3-js
     const svg = d3.select("#chart")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -60,9 +63,11 @@ function dataVisualization(data, matrix) {
         .append("g")
         .attr("transform", "translate(" + (width / 2 + margin.left) + "," + (height / 2 + margin.top) + ")")
         .datum(chord(interactions));
-/* __________________________________________Outer arcs_____________________________________________________________________________________--
-*/    
-    //Draw outer arcs
+/* __________________________________________Draw inner arcs_____________________________________________________________________________________--
+*/  
+//visualization idea taken from: https://stackoverflow.com/questions/43259039/how-to-add-labels-into-the-arc-of-a-chord-diagram-in-d3-js
+
+    //Draw inner arcs
     const innerArcs = svg.selectAll("g.group")
         .data(function(arcs) { return arcs.groups; })
         .enter().append("g")
@@ -85,8 +90,13 @@ function dataVisualization(data, matrix) {
         })
         .text(function (d, i) { return names[i]; })
 
-        const groups = d3.groups(data, d => d.diseaseName) 
-        const chordData = chord(interactions).groups
+/* __________________________________________Draw outer arcs_____________________________________________________________________________________--
+*/ 
+//visualization idea taken from: https://stackoverflow.com/questions/47877075/d3js-chord-diagram-multiple-groups
+//idea for hidden arc taken from: https://www.visualcinnamon.com/2015/09/placing-text-on-arcs/
+
+    const groups = d3.groups(data, d => d.diseaseName) 
+    const chordData = chord(interactions).groups
             
         console.log(chordData)
           
@@ -96,48 +106,49 @@ function dataVisualization(data, matrix) {
         
             var diseaseGroup = groups[i]
             var outerArc = d3.arc()
-            // Add to Radii to move arc flush against inner arc
               .innerRadius(innerRadius + 160)
               .outerRadius(outerRadius + 100)
               .startAngle(chordData[sIndex].startAngle) 
             .endAngle(chordData[eIndex].endAngle)
-            
+          
+            //Parameters for an invisible arc
+            var invidibleArc = d3.arc()
+            .innerRadius(innerRadius + 180)
+            .outerRadius(outerRadius + 110)
+            .startAngle(cD[__g.sIndex].startAngle) 
+            .endAngle(cD[__g.eIndex].endAngle) 
+          
+            //Drawing outer arc
+            svg.append("path")
+            .style('fill', colors[i])
+                .attr("class", "superGroup")
+                .style("opacity", "50%")
+            .attr("id", `outerGroup${i}`) //add id here ????????????
+            .attr("d", outerArc);
+
+            /*Drawing and invidible arc above the outer arc
+            so the text is floating abouve it **/
+            svg.append("path")
+              .style("fill", "none")
+              .attr("class", "hiddenDonutArcs")
+              .attr("id", "hiddenArc" + i)
+              .attr("d", invidibleArc);
         
-          
-              svg.append("path")
-              .style('fill', colors[i])
-                  .attr("class", "superGroup")
-                  .style("opacity", "50%")
-              .attr("id", `outerGroup${i}`) //add id here ????????????
-              .attr("d", outerArc);
-          
-            // Add a text labels
-             /*svg.selectAll(".superGroupText")
-                .enter().append("text")
-                .attr("class", "superGroupText")
-                .appen("textPath")
-                .attr("xlink:href", "#outerGroup" + i)
-                .text("some text"); **/
-          
-          //working!!!!
-              svg.append("text")
-                .attr("class", "superGroupText")
-                .append("textPath")
-                  .attr("href", "#outerGroup" + i)
-            .text(groups[i][1][0].diseaseName)
-            .attr("class", "text-2xl font-bold")
+        //Added text labels
+        //working!!!!
+            svg.append("text")
+              .attr("class", "superGroupText")
+              .append("textPath")
+                .attr("href", "#outerGroup" + i)
+          .text(groups[i][1][0].diseaseName)
+          .attr("class", "text-2xl font-bold")
           } 
-          
-          /*svg.selectAll(".superGroupText")
-            .data(groups)
-            .enter().append("text")
-            .attr("class", "superGroupText")
-            .append("textPath")
-            .attr("href", "#outerGroup" + function(d,i){return "#outerGroup"+d.index;})
-            .text("some text"); **/
-          
-          
-            //////////////////////////////////////////////////////////// Draw inner chords //////////////////////////////////////////////////////
+              
+/* __________________________________________Draw inner chords_____________________________________________________________________________________--
+*/ 
+//visualization idea taken from: https://stackoverflow.com/questions/47877075/d3js-chord-diagram-multiple-groups
+//tooltip animation idea taken from: https://medium.com/@kj_schmidt/show-data-on-mouse-over-with-d3-js-3bf598ff8fc2
+
             svg.append("g")
               .attr("class", "chord")
               .selectAll("path")
@@ -157,8 +168,13 @@ function dataVisualization(data, matrix) {
                 //Puting text into the tooltip
                 tooltip
                   .html("Source: " + names[d.source.index] + "<br>Target: " + names[d.target.index])
-                  .style("left", (event.x)/2+300 + "px")
-                  .style("top", (event.y)/2+500 + "px")
+                  
+                  //removed the styles as they were not really needed
+                  //added a nice transition that would "fade in" the text
+                  
+                  .transition()
+                    .duration(400)
+                    .style("font-size","16px");
           
                 return svg.selectAll("g.chord path")
                   .filter(function(chordData) {                   
@@ -171,6 +187,13 @@ function dataVisualization(data, matrix) {
           
               //The mouseout event
               .on('mouseout', function () {
+
+                //added a nice transition that would "fade out" the text
+                tooltip
+                  .transition()
+                  .duration(400)
+                  .style("font-size","0px")
+
                 return svg.selectAll("g.chord path")
                   .transition()
                   .style("opacity", opacityDefault);
@@ -179,20 +202,8 @@ function dataVisualization(data, matrix) {
           
           //////////////////////////////////////////////////////Exxxxxxxtra Functions////////////////////////////////////////////////////
           
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
 
-
-
-        /* __________________________________________Elements_____________________________________________________________________________________--
+/* __________________________________________Elements_____________________________________________________________________________________--
 
     //Draw inner chords
     svg.selectAll("path.chord")
