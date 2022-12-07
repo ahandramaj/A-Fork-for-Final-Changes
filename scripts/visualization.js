@@ -15,6 +15,7 @@ function dataVisualization(data, matrix) {
      innerRadius = Math.min(width, height) * .30 //changed multiplier from .39 to .30 to make diagram smaller,
      outerRadius = innerRadius * 1.1;
     
+    //making of lists of medication names and colors for every interactive medication
     for (var i = 0, l = data.length; i < l; i++)
     {
             names.push(data[i].medicationName)
@@ -22,19 +23,18 @@ function dataVisualization(data, matrix) {
             colors.push('#' + randomColor)
     }
     
- /* __________________________________________Math_____________________________________________________________________________________--
-*/
-    //Create scale and layout functions
-    const color = d3.scaleOrdinal()
-        .domain(d3.range(names.length))
-        .range(colors);
-/* __________________________________________Variable_____________________________________________________________________________________--
+/* __________________________________________Create scale and loyaut functions_____________________________________________________________________________________--
 */
 //variable ideas taken from: https://stackoverflow.com/questions/43259039/how-to-add-labels-into-the-arc-of-a-chord-diagram-in-d3-js
 //tooltip variable idea taken from: https://d3-graph-gallery.com/graph/chord_interactive.html
     const chord = d3.chord()
         .padAngle(0.15)
         .sortSubgroups(d3.descending)
+
+    //moved color variable to all variables
+    const color = d3.scaleOrdinal()
+        .domain(d3.range(names.length))
+        .range(colors);
 
     const arc = d3.arc()
         .innerRadius(innerRadius)
@@ -66,13 +66,13 @@ function dataVisualization(data, matrix) {
 /* __________________________________________Draw inner arcs_____________________________________________________________________________________--
 */  
 //visualization idea taken from: https://stackoverflow.com/questions/43259039/how-to-add-labels-into-the-arc-of-a-chord-diagram-in-d3-js
-
-    //Draw inner arcs
+    //Make a group for every "groups" dataset
     const innerArcs = svg.selectAll("g.group")
-        .data(function(arcs) { return arcs.groups; })
+        .data(function(chords) { return chords.groups; })
         .enter().append("g")
         .attr("class", "group")
 
+    //Visualize arcs using "path"
     innerArcs.append("path")
         .style("fill", function(d) { return color(d.index); })
         .attr("d", arc);// attribute of the svg element path
@@ -94,16 +94,20 @@ function dataVisualization(data, matrix) {
 */ 
 //visualization idea taken from: https://stackoverflow.com/questions/47877075/d3js-chord-diagram-multiple-groups
 //idea for hidden arc taken from: https://www.visualcinnamon.com/2015/09/placing-text-on-arcs/
-
+    
+    //make a list of disease names and medication groups
     const groups = d3.groups(data, d => d.diseaseName) 
     const chordData = chord(interactions).groups
             
         console.log(chordData)
           
     for (var i = 0; i < groups.length; i++) {
+    /*every star and end index represent the indexes of 
+    first and last medication for every disease arc*/
       const sIndex = data.map(x => x.medicationName).indexOf((groups[i])[1][0].medicationName)
       const eIndex = data.map(x => x.medicationName).indexOf((groups[i])[1][(groups[i][1].length)-1].medicationName)
         
+            //Parameters for an outer arc 
             var diseaseGroup = groups[i]
             var outerArc = d3.arc()
               .innerRadius(innerRadius + 160)
@@ -134,20 +138,20 @@ function dataVisualization(data, matrix) {
               .attr("id", "hiddenArc" + i)
               .attr("d", invidibleArc);
         
-        //Added text labels
-        //working!!!!
+            //Added text labels
             svg.append("text")
               .attr("class", "superGroupText")
               .append("textPath")
                 .attr("href", "#outerGroup" + i)
-          .text(groups[i][1][0].diseaseName)
-          .attr("class", "text-2xl font-bold")
+            .text(groups[i][1][0].diseaseName)
+            .attr("class", "text-2xl font-bold")
           } 
               
 /* __________________________________________Draw inner chords_____________________________________________________________________________________--
 */ 
 //visualization idea taken from: https://stackoverflow.com/questions/47877075/d3js-chord-diagram-multiple-groups
 //tooltip animation idea taken from: https://medium.com/@kj_schmidt/show-data-on-mouse-over-with-d3-js-3bf598ff8fc2
+
 
             svg.append("g")
               .attr("class", "chord")
